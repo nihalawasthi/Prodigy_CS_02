@@ -2,69 +2,83 @@ from PIL import Image
 
 def encrypt_image(image_path, encryption_key):
     try:
-        # Open the image
         img = Image.open(image_path)
         width, height = img.size
-
-        # Encrypt the image pixels
         pixels = img.load()
         for y in range(height):
             for x in range(width):
-                r, g, b = pixels[x, y]
+                pixel = pixels[x, y]
+                if len(pixel) == 3:
+                    r, g, b = pixel
+                    a = None
+                elif len(pixel) == 4:
+                    r, g, b, a = pixel
+                else:
+                    raise ValueError("Unsupported pixel format")
 
-                # Apply encryption algorithm (for simplicity, let's just XOR with encryption_key)
                 r ^= encryption_key
                 g ^= encryption_key
                 b ^= encryption_key
 
-                pixels[x, y] = (r, g, b)
-
-        # Return the encrypted image object
+                if a is None:
+                    pixels[x, y] = (r, g, b)
+                else:
+                    pixels[x, y] = (r, g, b, a)
         return img
     except Exception as e:
         print("Error encrypting image:", str(e))
+        return None
 
-def decrypt_image(encrypted_image, decryption_key):
+def decrypt_image(encrypted_image):
     try:
-        # Create a copy of the encrypted image
+        decryption_key = int(input("Enter the decryption key: "))
         decrypted_img = encrypted_image.copy()
         width, height = decrypted_img.size
-
-        # Decrypt the image pixels
         pixels = decrypted_img.load()
         for y in range(height):
             for x in range(width):
-                r, g, b = pixels[x, y]
+                pixel = pixels[x, y]
+                if len(pixel) == 3:
+                    r, g, b = pixel
+                    a = None
+                elif len(pixel) == 4:
+                    r, g, b, a = pixel
+                else:
+                    raise ValueError("Unsupported pixel format")
 
-                # Apply decryption algorithm (since XOR is its own inverse, we use the same operation)
                 r ^= decryption_key
                 g ^= decryption_key
                 b ^= decryption_key
 
-                pixels[x, y] = (r, g, b)
-
-        # Return the decrypted image object
+                if a is None:
+                    pixels[x, y] = (r, g, b)
+                else:
+                    pixels[x, y] = (r, g, b, a)
         return decrypted_img
     except Exception as e:
         print("Error decrypting image:", str(e))
+        return None
 
 def swap_pixels(image_path):
     try:
-        # Open the image
         img = Image.open(image_path)
         width, height = img.size
-
-        # Swap the image pixels
         pixels = img.load()
         for y in range(height):
             for x in range(width):
-                r, g, b = pixels[x, y]
-                pixels[x, y] = (b, r, g)  # Swapping the values of R, G, and B channels
-
-        # Return the swapped image object
+                pixel = pixels[x, y]
+                if len(pixel) == 3:
+                    r, g, b = pixel
+                    pixels[x, y] = (b, r, g)
+                elif len(pixel) == 4:
+                    r, g, b, a = pixel
+                    pixels[x, y] = (b, r, g, a)
+                else:
+                    raise ValueError("Unsupported pixel format")
         return img
     except Exception as e:
         print("Error swapping pixels:", str(e))
+        return None
 
 if __name__ == "__main__":
     image_path = input("Enter the path to the image file: ")
@@ -74,54 +88,27 @@ if __name__ == "__main__":
 
         if choice == '1':
             encryption_key = int(input("Enter the encryption key (an integer): "))
-
-            # Encrypt the image
             encrypted_image = encrypt_image(image_path, encryption_key)
+            if encrypted_image is not None:
+                encrypted_image.show()
+                encrypted_image.save("encrypted_image.png")
 
-            # Show a black image after encryption
-            black_image = Image.new('RGB', encrypted_image.size, (0, 0, 0))
-            black_image.show()
-
-            decrypt_choice = input("Would you like to decrypt the image? (yes/no): ")
-            if decrypt_choice.lower() == 'yes':
-                decryption_key = int(input("Enter the decryption key: "))
-
-                # Decrypt the image
-                decrypted_image = decrypt_image(encrypted_image, decryption_key)
-                decrypted_image.show()
-
-                swap_choice = input("Would you like to swap pixels or exit? (swap/exit): ")
-                if swap_choice.lower() == 'swap':
-                    swapped_image = swap_pixels(image_path)
-                    swapped_image.show()
-                    break
-                elif swap_choice.lower() == 'exit':
-                    break
-                else:
-                    print("Invalid choice.")
+                decrypt_choice = input("Would you like to decrypt the image? (yes/no): ")
+                if decrypt_choice.lower() == 'yes':
+                    decrypted_image = decrypt_image(encrypted_image)
+                    if decrypted_image is not None:
+                        decrypted_image.show()
 
         elif choice == '2':
-            decryption_key = int(input("Enter the decryption key: "))
-
-            # Decrypt the image
             encrypted_image = Image.open(image_path)
-            decrypted_image = decrypt_image(encrypted_image, decryption_key)
-            decrypted_image.show()
-
-            swap_choice = input("Would you like to swap pixels or exit? (swap/exit): ")
-            if swap_choice.lower() == 'swap':
-                swapped_image = swap_pixels(image_path)
-                swapped_image.show()
-                break
-            elif swap_choice.lower() == 'exit':
-                break
-            else:
-                print("Invalid choice.")
+            decrypted_image = decrypt_image(encrypted_image)
+            if decrypted_image is not None:
+                decrypted_image.show()
 
         elif choice == '3':
             swapped_image = swap_pixels(image_path)
-            swapped_image.show()
-            break
+            if swapped_image is not None:
+                swapped_image.show()
 
         elif choice == '4':
             break
